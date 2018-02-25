@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  
+
+  
+
+  
+  
+  
+
+  
+
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.js"></script>
+
+  
+
+  
+
+  
+
+  
+    <link rel="stylesheet" type="text/css" href="/css/result-light.css">
+  
+
+  
+    
+
+  
+
+  <style type="text/css">
+          html, body {
+        height: 100%;
+        margin: 20;
+        padding: 0;
+        font-family: verdana, sans-serif;
+      }
+      #map {
+        height: 100%;
+      }
+      li {
+        margin-bottom: 15px;
+      }
+  </style>
+
+  <title>Google Map with Editable Circle</title>
+
+  
+</head>
+
+<body>
+  <h1>
+Editable and Movable Google Map Circle with AJAX calls
+</h1>
+<p>
+When you resize or move (drag the center dot) the circle, an AJAX call is made using the circle boundaries as the filter.
+</p>
+<p>
+Some of the pages that were useful in building this were</p>
+<ul>
+<li><a href="https://developers.google.com/maps/documentation/javascript/examples/user-editable-shapes">https://developers.google.com/maps/documentation/javascript/examples/user-editable-shapes</a></li>
+<li>
+  <a href="https://developers.google.com/maps/documentation/javascript/examples/rectangle-event">https://developers.google.com/maps/documentation/javascript/examples/rectangle-event</a>
+</li>
+<li>
+  <a href="https://developers.google.com/maps/documentation/javascript/3.22/reference#Circle">https://developers.google.com/maps/documentation/javascript/3.22/reference#Circle</a>
+</li>
+<li>
+  <a href="https://dev.socrata.com/docs/functions/within_circle.html">https://dev.socrata.com/docs/functions/within_circle.html</a>
+</li>
+</ul>
+
+
+<div id="map"></div>
+  
+
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYG2ito9A0GpjQQ5wqmLqmiz6_diAIPUI">
+    </script>
+
+
+<script type="text/javascript">//<![CDATA[
+
+// get the current location and intialize the map
+
+$(document).ready(function () {
+	if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(initMap);
+	}
+  else {
+  	initMap();
+  }
+});
+
+
+// global vars
+
+var circle, map, latLng, infoWindow;
+var mapMarkers = [];	// array for marker objects;  helpful in removing them
+
+
+
+// This example adds a user-editable circle to the map.
+function initMap(position) {
+	console.log(position);
+
+	latLng = {lat: 41.8369, lng: -87.6847};	  // default if no geo-location data
+  
+  if (position.coords) {
+    latLng.lat = position.coords.latitude;
+    latLng.lng = position.coords.longitude;
+	}
+
+
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: latLng,
+    zoom: 13
+  });
+
+
+  // Define a circle and set its editable property to true.
+  circle = new google.maps.Circle({
+    center: latLng,
+    radius: 1000,
+    map: map,
+    editable: true,
+    strokeColor: '#FF0000',
+    strokeOpacity: 0.8,
+    strokeWeight: 2,
+    fillColor: '#FF0000',
+    fillOpacity: 0.35,
+	});
+  
+  circle.addListener('bounds_changed', showNewCircle);
+  
+  show911Calls(circle);  // make the AJAX call and map the data
+  
+  // Define an info window on the map;  we'll update this with new circle params
+  infoWindow = new google.maps.InfoWindow();
+  
+}
+
+function showNewCircle(event) {
+  console.log(circle.getBounds());
+
+  // construct circle-change info window
+  var contentString = '<b>Circle Changed.</b><br>' +
+      'Circle center = ' + circle.getCenter() + '<br>' +
+      'Circle radius: ' + circle.getRadius();
+
+  // Set the info window's content and position.
+  infoWindow.setContent(contentString);
+  infoWindow.setPosition(circle.getCenter());
+
+  clearMarkers();   // remove existing markers 
+
+  infoWindow.open(map);		// show the info window
+  
+  
+  show911Calls(circle);  // make the AJAX call and map the data
+}
+
+
+
+function clearMarkers () {
+	// for markers in the array, remove the reference to our map object	
+  $.each(mapMarkers, function(i,entry) {
+  	entry.setMap(null);
+  });
+}
+
+
+
+function show911Calls (circle) {
+	
+  var apiEndpoint = 'https://data.baltimorecity.gov/resource/m8g9-abgb.json';
+  var centerLat = circle.getCenter().lat();
+  var centerLng = circle.getCenter().lng();
+  
+  
+  // using the within_circle function and the circle's location and radius
+  var filter = '?$where=calldatetime > \'2018-02-15\' and within_circle(location,' 	
+  		+ centerLat
+      + ','
+   		+ centerLng
+      + ','     
+      + circle.getRadius()
+      + ')';
+      
+  // AJAX call
+  $.get(apiEndpoint + filter)
+  	.done(function (data) {
+      mapCalls(data);
+    })
+    .fail (function () {
+    	console.log("fail " + apiEndpoint + filter);
+    });
+}
+
+function mapCalls(data){
+	console.log('started mapCalls');
+	
+	$.each(data,function(i,entry) {
+	    //console.log(entry);
+    	
+    	var contentString = '<div id="content">'+
+          '<div id="siteNotice">'+
+          '</div>'+
+          '<h1 id="firstHeading" class="firstHeading">' +
+          entry.callnumber +
+          '</h1>'+
+          '<div id="bodyContent">'+
+          '<p>Incident Location ' +
+          entry.incidentlocation +
+          '<br>' +
+          entry.description +
+          '<br>' +
+          entry.calldatetime +
+          '<br>' +
+          '</p>'+
+          '</div>'+
+          '</div>';
+
+      var infowindow = new google.maps.InfoWindow({
+        content: contentString
+      });
+
+      var marker = new google.maps.Marker({
+        position: {lat: parseFloat(entry.location.coordinates[1]),lng: parseFloat(entry.location.coordinates[0])},
+        map: map,
+        title: entry.incidentlocation
+      });
+      
+      mapMarkers.push(marker);	// add each marker to the array for later removal
+      
+      marker.addListener('click', function() {
+        infowindow.open(map, marker);
+      });
+    });
+
+}
+
+
+
+//]]> 
+
+</script>
+
+
+
+</body>
+
+</html>
+
