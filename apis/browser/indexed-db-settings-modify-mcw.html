@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!--Adapted from the Dexie.js Getting Started example at-->
+<!--http://dexie.org/docs/Tutorial/Getting-started-->
+
+<html>
+    <head>
+        <title>Dexie/IndexedDB Settings</title>
+        <!-- Include Dexie -->
+      <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/normalize/6.0.0/normalize.min.css">
+      <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+      <link rel="stylesheet"
+        href="https://unpkg.com/material-components-web@0.9.1/dist/material-components-web.min.css">
+        <style>
+            .template {display:none;}
+        </style>
+
+    </head>
+    <body class="mdc-typography">
+        <div id="content">
+        <h1>IndexedDB Settings example with MCW<br><small>Using the Dexie.js library</small></h1>
+        <p>Open the Dev Tools Application tab to see the entries;  you should also see the item names in the console tab.</p>
+    
+        <div id="templateSwitch" class="template mdc-switch">
+          <input type="checkbox" id="basic-switch" class="mdc-switch__native-control" />
+          <div class="mdc-switch__background">
+            <div class="mdc-switch__knob"></div>
+          </div>
+        </div>
+        </div>
+    </body>
+    <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/material-components-web@0.9.1/dist/material-components-web.min.js">
+        </script>
+    <script>mdc.autoInit()</script>
+    <script>
+        var appSettings = [
+            {"name":"Italian","type":"boolean"},
+            {"name":"Thai", "type":"boolean"},
+            {"name":"Mexican", "type":"boolean"},
+            {"name":"Indian", "type":"boolean"}
+            ];
+        var existingSettings = [];
+        
+          //
+          // Define your database
+          //
+          var db = new Dexie("appDataSettingsMCWExample");
+          db.version(1).stores({
+              cuisines: 'name,value'
+          });
+
+          db.open().then(function() {
+             console.log("db.open");
+             return db.cuisines.each(setting => {
+                existingSettings.push(setting.name);
+             });
+
+          }).then (function() {
+             console.log("ensure settings exist");
+              console.log("existing settings", existingSettings);
+              // make sure all settings are in db before updating UI
+              var settingName="",defaultValue = "";
+              
+              for (var i=0; i<appSettings.length; i++) {
+                  settingName = appSettings[i].name;
+                  // if doesn't exist, add
+                  console.log(existingSettings.indexOf(settingName));
+                  if (existingSettings.indexOf(settingName) < 0) {
+                     // set default value
+                     if (appSettings[i].type == "boolean") {
+                         defaultValue = false;
+                     } else {
+                         defaultValue = "";
+                     }
+                     console.log(settingName, defaultValue);
+                     db.cuisines.add({"name": settingName,"value":defaultValue});
+                  }
+    
+              }
+              
+              
+          }).then(function() {
+             console.log("loop and update UI");
+             var clone, label;
+              db.cuisines.each(setting => {
+                clone = $("#templateSwitch").clone();
+                clone.removeClass("template");
+                clone.attr("data-mdc-auto-init","MDCSwitch");
+                clone.attr("id", "switchContainer-" + setting.name);
+                clone.find("input").attr("id",setting.name);
+
+                if (setting.value) {
+                    clone.find("input").prop("checked", true);
+                }
+                
+                label = $("<label>").attr("for",setting.name).text(setting.name + " off/on");
+                
+                $("#content").append(clone," ",label,"<br>");
+
+             });
+
+            }).catch(function(error) {
+
+             console.log ("Ooops: " + error);
+             alert ("Ooops: " + error);
+          });  
+          
+          
+          
+          $("body").on("change", "input", function() {
+             var newValue = $(this).prop("checked");
+             db.cuisines.put({"name": $(this).attr("id"), "value": newValue});
+             console.log("value updated");
+          });
+    </script>
+    
+    
+</html>

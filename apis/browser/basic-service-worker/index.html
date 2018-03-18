@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Basic Service Worker Example</title>
+    </head>
+    <body>
+        <h1>Basic Service Worker Example</h1>
+        <p>Basic example with cache/retrieval of index.html; you can view the service worker and the cache in the Dev Tools.</p>
+
+        <script>
+            if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.register('sw.js');
+            } else {
+                console.log("no support for service workers");
+            }
+
+        </script>
+
+    </body>
+</html>

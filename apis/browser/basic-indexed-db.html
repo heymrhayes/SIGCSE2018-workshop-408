@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!--Adapted from the Dexie.js Getting Started example at-->
+<!--http://dexie.org/docs/Tutorial/Getting-started-->
+
+<html>
+    <head>
+        <title>Dexie/IndexedDB Basic</title>
+        <!-- Include Dexie -->
+      <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+
+      <script>
+          //
+          // Define your database
+          //
+          var db = new Dexie("appData");
+          db.version(1).stores({
+              favorites: '++id,name,dateAdded'
+          });
+
+          
+          
+          db.open().then(function() {
+              
+            console.log('adding');
+          //
+          // Put some data into it
+          //
+            db.favorites.bulkAdd([{name: "Metropolis Coffee", dateAdded: new Date('2018-03-01')},{name: "New Wave Coffee", dateAdded: new Date('2018-03-02')}])
+            }).then (function(){
+
+                db.favorites.each(favorite => console.log(favorite.name))
+
+
+          }).catch(function(error) {
+             //
+             // Finally don't forget to catch any error
+             // that could have happened anywhere in the
+             // code blocks above.
+             //
+             alert ("Ooops: " + error);
+          });
+      </script>
+    </head>
+    <body>
+        
+        <h1>IndexedDB basic example <small>Using the Dexie.js library</small></h1>
+        <p>Open the Dev Tools Application tab to see the entries;  you should also see the item names in the console tab.</p>
+    </body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--Adapted from the Dexie.js Getting Started example at-->
+<!--http://dexie.org/docs/Tutorial/Getting-started-->
+
+<html>
+    <head>
+        <title>Dexie/IndexedDB Settings</title>
+        <!-- Include Dexie -->
+      <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+
+
+    </head>
+    <body>
+        
+        <h1>IndexedDB Settings example <br><small>Using the Dexie.js library</small></h1>
+        <p>Open the Dev Tools Application tab to see the entries;  you should also see the item names in the console tab.</p>
+    </body>
+    <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+    
+    <script>
+        var appSettings = [
+            {"name":"displayName","type":"text"},
+            {"name":"backgroundColor", "type":"text"},
+            {"name":"someBooleanSetting1","type":"boolean"},
+            {"name":"someBooleanSetting2", "type":"boolean"}
+            ];
+        var existingSettings = [];
+        
+          //
+          // Define your database
+          //
+          var db = new Dexie("appDataSettingsExample");
+          db.version(1).stores({
+              settings: 'name,value'
+          });
+
+          db.open().then(function() {
+             console.log("db.open");
+             return db.settings.each(setting => {
+                existingSettings.push(setting);
+             });
+
+          }).then (function() {
+             console.log("ensure settings exist");
+              
+              // make sure all settings are in db before updating UI
+              var settingName="",defaultValue = "";
+              
+              for (var i=0; i<appSettings.length; i++) {
+                  settingName = appSettings[i].name;
+                  // if doesn't exist, add
+                  if (existingSettings.indexOf(settingName) < 0) {
+                     // set default value
+                     if (appSettings[i].type == "boolean") {
+                         defaultValue = false;
+                     } else {
+                         defaultValue = "";
+                     }
+                     console.log(settingName, defaultValue);
+                     db.settings.add({"name": settingName,"value":defaultValue});
+                  }
+    
+              }
+              
+              
+          }).then(function() {
+             console.log("loop and update UI");
+                
+              db.settings.each(setting => {
+                $("body").append(setting.name + ": " + setting.value + "<br>");
+
+             });
+              
+              
+            }).catch(function(error) {
+
+             console.log ("Ooops: " + error);
+             alert ("Ooops: " + error);
+          });        
+    </script>
+    
+    
+</html>
