@@ -54,14 +54,10 @@
           
           
           startCaptureButton.addEventListener('click', () => {
-            
             doFaceCapture = true;
-            // set starting position
-            nextX = 0;
-            nextY = 0;
-            // trigger capture loop
-            getImageData('FACE_DETECTION');
             
+            // start capture loop
+            getImageData('FACE_DETECTION');
           });
           
           
@@ -136,8 +132,15 @@
                     nextY += faceHeight;
                   }
                   
-                  if (nextY > collageCanvas.height) {
-                    doFaceCapture = false;
+                  if (nextY + faceHeight > collageCanvas.height) {
+                    // make the collage taller as needed
+                    //   but resizing clears it, so we need to
+                    //   save and redraw the data
+                    
+                    var imgData=collageContext.getImageData(0,0,collageCanvas.width, collageCanvas.height);
+
+                    collageCanvas.height += faceHeight;
+                    collageContext.putImageData(imgData,0,0);
                   }                  
 
                   collageContext.drawImage(frameCanvas, sourceX, sourceY, faceWidth, faceHeight, nextX, nextY, faceWidth, faceHeight); 
