@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Media</title>
+        <style>
+          #frameCanvas {display:none;}
+          button {font-size: 2em;}
+        </style>
+
+    </head>
+    <body>
+
+        <video id="player" width="100" height="100" controls autoplay></video>
+        <button id="startCapture">Start Capture</button>
+        <button id="stopCapture">Stop Capture</button>
+        <canvas id="frameCanvas" width=320 height=240></canvas>
+        <canvas id="collageCanvas"></canvas>
+        <div id="imageData" ></div>
+        
+        
+
+
+
+      <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+
+        
+        <script>
+          const supported = 'mediaDevices' in navigator;
+          const player = document.getElementById('player');
+          const frameCanvas = document.getElementById('frameCanvas');
+          const collageCanvas = document.getElementById('collageCanvas');
+          const frameContext = frameCanvas.getContext('2d');
+          const collageContext = collageCanvas.getContext('2d');
+          const startCaptureButton = document.getElementById('startCapture');
+          const stopCaptureButton = document.getElementById('stopCapture');
+          const dataDiv = document.getElementById('imageData');
+          const visionApiEndpoint = "https://vision.googleapis.com/v1/images:annotate";
+          var requestBody, nextX = 0, nextY = 0;
+          var doFaceCapture = false;
+          
+          collageCanvas.width = window.innerWidth;
+          collageCanvas.height = 300;
+          
+          const constraints = {
+            video: true,
+          };
+        
+
+          
+          
+          startCaptureButton.addEventListener('click', () => {
+            doFaceCapture = true;
+            
+            // trigger capture loop
+            getImageData('FACE_DETECTION');
+            
+          });
+          
+          
+          stopCaptureButton.addEventListener('click', () => {
+            doFaceCapture = false;
+          });          
+        
+          // Attach the video stream to the video element and autoplay.
+          navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+              player.srcObject = stream;
+            });
+            
+            
+            
+          function getImageData(type) {
+             // capture the video frame to the hidden canvas
+             frameContext.drawImage(player, 0, 0, frameCanvas.width, frameCanvas.height);
+
+            frameCanvas.toDataURL().split(",")[1]
+             
+             // create the request body
+             requestBody = {
+                "requests":[
+                  {
+                    "image":{
+                      "content":frameCanvas.toDataURL().split(",")[1]
+                    },
+                    "features":[
+                      {
+                        "type": type,
+                        "maxResults":10
+                      }
+                    ]
+                  }
+                ]
+              };
+            
+            // send the data to Google Cloud Vision
+            $.ajax({
+                method: "POST",
+                contentType: "application/json",
+                url: visionApiEndpoint + "?key=AIzaSyBca88kmU7Cg7S5W47I_8_24DwkPLUXGVs",
+                data: JSON.stringify(requestBody)
+              })
+                .done(function(response) {
+                  console.log(response);
+                  
+                  // get object with face coordinates as determined by GCV
+                  
+                  // TODO - handle "no face" condition
+                  var faceVertices = response.responses[0].faceAnnotations[0].boundingPoly.vertices;
+                  console.log(faceVertices);
+                  
+                  // find corners
+                  var topLeft = faceVertices[0];
+                  var bottomRight = faceVertices[2];
+                  console.log(bottomRight, bottomRight.x, topLeft, topLeft.x);
+                  
+                  // determine width and height for cropping
+                  var faceWidth = bottomRight.x - topLeft.x;
+                  var faceHeight = bottomRight.y - topLeft.y;
+                  var sourceX = topLeft.x;
+                  var sourceY = topLeft.y;
+                  var destWidth = faceWidth;
+                  var destHeight = faceHeight;
+
+
+                  // check to see whether we need to start a new row or column
+                  if (nextX > collageCanvas.width) {
+                    nextX = 0;
+                    nextY += faceHeight;
+                  }
+                  
+                  if (nextY > collageCanvas.height) {
+                    doFaceCapture = false;
+                  }                  
+
+                  collageContext.drawImage(frameCanvas, sourceX, sourceY, faceWidth, faceHeight, nextX, nextY, faceWidth, faceHeight); 
+                  
+                  nextX += faceWidth;
+                  
+                
+                  
+                  if (doFaceCapture) {
+                    getImageData('FACE_DETECTION');
+                  }
+                  
+                });
+        
+          }
+            
+    
+    
+        </script>
+    </body>
+</html>

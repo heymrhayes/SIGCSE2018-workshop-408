@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> </title>
+        
+        
+        
+    </head>
+    <body>
+        <h1>Geolocation example</h1>
+        <p>Check out the MDN documentation at <a href="https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation">https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation</a></p>
+        <p>This script uses the following options. Check the console for output.</p>
+        <pre>
+        var geo_options = {
+          enableHighAccuracy: true, 
+          maximumAge        : 30000, 
+          timeout           : 27000
+        };
+        </pre>
+
+    <script>
+        var start, error, success;
+        
+        function geo_success(position) {
+          success = new Date();
+          console.log(position.coords.latitude, position.coords.longitude, success);
+        }
+        
+        function geo_error() {
+          error = new Date();
+          console.log("Sorry, no position available.", error, 
+          "\nNotice this event fires at the timeout value set in the options. The success event could fire subsequently.");
+        }
+        
+        var geo_options = {
+          enableHighAccuracy: true, 
+          maximumAge        : 30000, 
+          timeout           : 27000
+        };
+        
+        
+        if ("geolocation" in navigator) {
+            start = new Date();
+            console.log("Geolocation available", start);
+            var wpid = navigator.geolocation.watchPosition(geo_success, geo_error, geo_options);
+        } else {
+          console.log("geolocation IS NOT available");
+        }
+        
+    </script>
+
+    </body>
+</html>
