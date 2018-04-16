@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Google Translate API</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+  </head>
+  <body class="mdc-typography">
+        <h1 class="mdc-typography--display1">Google Translate API</h1>
+        <p class="mdc-typography--body1">Type some English text in the box and click the button to see the Spanish translation.</p>
+        <textarea rows="10" cols="50" class="mdc-text-field mdc-text-field--textarea"></textarea>
+        <button id="translate" class="mdc-typography--button">Translate English to Spanish</button>
+        <div style="margin-top:25px; padding:25px;" class="mdc-typography--body1" id="translation">
+            
+        </div>
+        <script
+              src="https://code.jquery.com/jquery-3.3.1.min.js"
+              integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+              crossorigin="anonymous"></script>
+        <script>
+            $("#translate").on("click", function() {
+               var url = 'https://translation.googleapis.com/language/translate/v2';
+               url += "?key=AIzaSyDFE9BAasevH_Kg_JXbC-G2TI2yFkAlw9I";
+               url += "&target=es&q=" + $("textarea").val();
+               
+                $.ajax({
+                    url: url
+                  })
+                  .done(function (response) {
+                      console.log(response.data.translations[0].translatedText);
+                      $("#translation").text(response.data.translations[0].translatedText);
+                      $("#translation").css("background-color","silver");
+                  });
+                
+            });
+
+        </script>
+        
+    </body>
+</html>
